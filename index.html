@@ -113,8 +113,21 @@
                 hlsInstance = null;
             }
 
+            const PROXY = window.location.origin + '/proxy/';
+            function proxyR2(url) {
+                return url.includes('r2.cloudflarestorage.com')
+                    ? PROXY + encodeURIComponent(url)
+                    : url;
+            }
+
             if (Hls.isSupported()) {
                 hlsInstance = new Hls();
+                hlsInstance.on(Hls.Events.FRAG_LOADING, (e, data) => {
+                    data.frag.url = proxyR2(data.frag.url);
+                });
+                hlsInstance.on(Hls.Events.LEVEL_LOADING, (e, data) => {
+                    data.url = proxyR2(data.url);
+                });
                 hlsInstance.loadSource(url);
                 hlsInstance.attachMedia(modalVideo);
                 hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => {
