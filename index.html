@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prijenos Uživo</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <nav class="navbar">
+        <a href="/" class="logo">Prijenos Uživo</a>
+        <button class="login-btn">Login</button>
+    </nav>
+
+    <main class="main-content">
+        <div class="content-wrapper">
+            <h1 class="page-title">24/7 Uživo Kanali</h1>
+
+            <div class="search-wrapper">
+                <input type="text" class="search-input" placeholder="Pretrazi..." id="searchInput">
+            </div>
+
+            <div class="letter-bar" id="letterBar">
+                <button class="letter-btn active" data-letter="all">ALL</button>
+                <button class="letter-btn" data-letter="a">A</button>
+                <button class="letter-btn" data-letter="b">B</button>
+                <button class="letter-btn" data-letter="c">C</button>
+                <button class="letter-btn" data-letter="d">D</button>
+                <button class="letter-btn" data-letter="e">E</button>
+                <button class="letter-btn" data-letter="f">F</button>
+                <button class="letter-btn" data-letter="g">G</button>
+                <button class="letter-btn" data-letter="h">H</button>
+                <button class="letter-btn" data-letter="i">I</button>
+                <button class="letter-btn" data-letter="j">J</button>
+                <button class="letter-btn" data-letter="k">K</button>
+                <button class="letter-btn" data-letter="l">L</button>
+                <button class="letter-btn" data-letter="m">M</button>
+                <button class="letter-btn" data-letter="n">N</button>
+                <button class="letter-btn" data-letter="o">O</button>
+                <button class="letter-btn" data-letter="p">P</button>
+                <button class="letter-btn" data-letter="q">Q</button>
+                <button class="letter-btn" data-letter="r">R</button>
+                <button class="letter-btn" data-letter="s">S</button>
+                <button class="letter-btn" data-letter="t">T</button>
+                <button class="letter-btn" data-letter="u">U</button>
+                <button class="letter-btn" data-letter="v">V</button>
+                <button class="letter-btn" data-letter="w">W</button>
+                <button class="letter-btn" data-letter="x">X</button>
+                <button class="letter-btn" data-letter="y">Y</button>
+                <button class="letter-btn" data-letter="z">Z</button>
+            </div>
+
+            <div class="card-grid" id="cardGrid"></div>
+        </div>
+    </main>
+
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal">
+            <button class="modal-close" id="modalClose">&times;</button>
+            <iframe id="modalIframe" src="" width="100%" height="100%" style="border:0;" allowfullscreen></iframe>
+        </div>
+    </div>
+
+    <script>
+        let allChannels = [];
+        const cardGrid = document.getElementById('cardGrid');
+        const letterBtns = document.querySelectorAll('.letter-btn');
+        const searchInput = document.getElementById('searchInput');
+        const modalOverlay = document.getElementById('modalOverlay');
+        const modalIframe = document.getElementById('modalIframe');
+        const modalClose = document.getElementById('modalClose');
+
+        async function loadChannels() {
+            try {
+                const res = await fetch('kanali.json');
+                allChannels = await res.json();
+                renderChannels('all');
+            } catch (e) {
+                console.error('Failed to load channels', e);
+            }
+        }
+
+        function getFirstLetter(name) {
+            return name.trim().charAt(0).toLowerCase();
+        }
+
+        function filterChannels(letter) {
+            if (letter === 'all') return allChannels;
+            return allChannels.filter(ch => getFirstLetter(ch.channel_name) === letter);
+        }
+
+        function openModal(url) {
+            modalIframe.src = url;
+            modalOverlay.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeModal() {
+            modalOverlay.classList.remove('active');
+            modalIframe.src = '';
+            document.body.style.overflow = '';
+        }
+
+        function renderChannels(letter) {
+            const channels = filterChannels(letter);
+            cardGrid.innerHTML = '';
+            channels.forEach(ch => {
+                const card = document.createElement('div');
+                card.className = 'channel-card';
+                card.innerHTML = `
+                    <div class="card-name">${ch.channel_name}</div>
+                    <div class="card-id">ID: ${ch.channel_id}</div>
+                `;
+                card.addEventListener('click', () => {
+                    openModal(ch.watchurl);
+                });
+                cardGrid.appendChild(card);
+            });
+        }
+
+        letterBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                letterBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                searchInput.value = '';
+                renderChannels(btn.dataset.letter);
+            });
+        });
+
+        searchInput.addEventListener('input', (e) => {
+            letterBtns.forEach(b => b.classList.remove('active'));
+            const q = e.target.value.toLowerCase();
+            const filtered = allChannels.filter(ch => 
+                ch.channel_name.toLowerCase().includes(q)
+            );
+            cardGrid.innerHTML = '';
+            filtered.forEach(ch => {
+                const card = document.createElement('div');
+                card.className = 'channel-card';
+                card.innerHTML = `
+                    <div class="card-name">${ch.channel_name}</div>
+                    <div class="card-id">ID: ${ch.channel_id}</div>
+                `;
+                card.addEventListener('click', () => {
+                    openModal(ch.watchurl);
+                });
+                cardGrid.appendChild(card);
+            });
+        });
+
+        modalClose.addEventListener('click', closeModal);
+        modalOverlay.addEventListener('click', (e) => {
+            if (e.target === modalOverlay) closeModal();
+        });
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeModal();
+        });
+
+        loadChannels();
+    </script>
+
+    <footer class="footer">
+        <div class="brand">gledaj.uzivo</div>
+        <div class="copyright">&copy; 2026 All rights reserved.</div>
+    </footer>
+</body>
+</html>
