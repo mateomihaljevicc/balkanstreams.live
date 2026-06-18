@@ -104,15 +104,6 @@
             return allChannels.filter(ch => getFirstLetter(ch.channel_name) === letter);
         }
 
-        const PROXY_BASE = window.location.origin + '/proxy/';
-
-        function getProxiedUrl(url) {
-          if (url.includes('.m3u8') || url.includes('mpegurl')) {
-            return PROXY_BASE + encodeURIComponent(url);
-          }
-          return url;
-        }
-
         function openModal(url) {
             modalOverlay.classList.add('active');
             document.body.style.overflow = 'hidden';
@@ -122,17 +113,15 @@
                 hlsInstance = null;
             }
 
-            const proxiedUrl = getProxiedUrl(url);
-
             if (Hls.isSupported()) {
                 hlsInstance = new Hls();
-                hlsInstance.loadSource(proxiedUrl);
+                hlsInstance.loadSource(url);
                 hlsInstance.attachMedia(modalVideo);
                 hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => {
                     modalVideo.play();
                 });
             } else if (modalVideo.canPlayType('application/vnd.apple.mpegurl')) {
-                modalVideo.src = proxiedUrl;
+                modalVideo.src = url;
                 modalVideo.play();
             }
         }
