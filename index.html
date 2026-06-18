@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ex-Yu Kanali Uživo</title>
     <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest/dist/hls.min.js"></script>
 </head>
 <body>
     <nav class="navbar">
@@ -57,7 +58,7 @@
     <div class="modal-overlay" id="modalOverlay">
         <div class="modal">
             <button class="modal-close" id="modalClose">&times;</button>
-            <iframe id="modalIframe" src="" width="100%" height="100%" style="border:0;" scrolling='no' allowfullscreen></iframe>
+            <video id="modalVideo" controls autoplay playsinline style="width:100%;height:100%;background:#000;"></video>
         </div>
     </div>
 
@@ -67,8 +68,9 @@
         const letterBtns = document.querySelectorAll('.letter-btn');
         const searchInput = document.getElementById('searchInput');
         const modalOverlay = document.getElementById('modalOverlay');
-        const modalIframe = document.getElementById('modalIframe');
+        const modalVideo = document.getElementById('modalVideo');
         const modalClose = document.getElementById('modalClose');
+        let hlsInstance = null;
 
         async function loadChannels() {
             try {
@@ -89,16 +91,47 @@
             return allChannels.filter(ch => getFirstLetter(ch.channel_name) === letter);
         }
 
+        const PROXY_BASE = 'http://localhost:3000/proxy/';
+
+        function getProxiedUrl(url) {
+          if (url.includes('.m3u8') || url.includes('mpegurl')) {
+            return PROXY_BASE + encodeURIComponent(url);
+          }
+          return url;
+        }
+
         function openModal(url) {
-            modalIframe.src = url;
             modalOverlay.classList.add('active');
             document.body.style.overflow = 'hidden';
+
+            if (hlsInstance) {
+                hlsInstance.destroy();
+                hlsInstance = null;
+            }
+
+            const proxiedUrl = getProxiedUrl(url);
+
+            if (Hls.isSupported()) {
+                hlsInstance = new Hls();
+                hlsInstance.loadSource(proxiedUrl);
+                hlsInstance.attachMedia(modalVideo);
+                hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => {
+                    modalVideo.play();
+                });
+            } else if (modalVideo.canPlayType('application/vnd.apple.mpegurl')) {
+                modalVideo.src = proxiedUrl;
+                modalVideo.play();
+            }
         }
 
         function closeModal() {
             modalOverlay.classList.remove('active');
-            modalIframe.src = '';
             document.body.style.overflow = '';
+            if (hlsInstance) {
+                hlsInstance.destroy();
+                hlsInstance = null;
+            }
+            modalVideo.src = '';
         }
 
         function renderChannels(letter) {
