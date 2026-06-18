@@ -41,8 +41,8 @@ app.get('/proxy/*', async (req, res) => {
 
     const headers = {
       'User-Agent': req.get('User-Agent') || 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-      'Referer': 'https://kolis.phantemlis.top/',
-      'Origin': 'https://kolis.phantemlis.top',
+      'Referer': 'https://dlhd.pk/',
+      'Origin': 'https://dlhd.pk',
     };
     if (req.get('Range')) headers['Range'] = req.get('Range');
 
