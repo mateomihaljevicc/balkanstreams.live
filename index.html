@@ -114,20 +114,22 @@
             }
 
             const PROXY = window.location.origin + '/proxy/';
-            function proxyR2(url) {
-                return url.includes('r2.cloudflarestorage.com')
-                    ? PROXY + encodeURIComponent(url)
-                    : url;
-            }
 
             if (Hls.isSupported()) {
-                hlsInstance = new Hls();
-                hlsInstance.on(Hls.Events.FRAG_LOADING, (e, data) => {
-                    data.frag.url = proxyR2(data.frag.url);
-                });
-                hlsInstance.on(Hls.Events.LEVEL_LOADING, (e, data) => {
-                    data.url = proxyR2(data.url);
-                });
+                const DefaultLoader = Hls.DefaultConfig.loader;
+                class ProxyLoader {
+                    constructor(cfg) { this._loader = new DefaultLoader(cfg); }
+                    load(ctx, cfg, cb) {
+                        if (ctx.url && ctx.url.includes('r2.cloudflarestorage.com')) {
+                            ctx.url = PROXY + encodeURIComponent(ctx.url);
+                        }
+                        this._loader.load(ctx, cfg, cb);
+                    }
+                    abort() { this._loader.abort(); }
+                    destroy() { this._loader.destroy(); }
+                    get stats() { return this._loader.stats; }
+                }
+                hlsInstance = new Hls({ loader: ProxyLoader });
                 hlsInstance.loadSource(url);
                 hlsInstance.attachMedia(modalVideo);
                 hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => {
