@@ -1,6 +1,11 @@
 import express from 'express';
 import fetch from 'node-fetch';
+import path from 'path';
+import { fileURLToPath } from 'url';
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
+
+app.use(express.static(__dirname));
 
 app.use((req, res, next) => {
   res.set('Access-Control-Allow-Origin', '*');

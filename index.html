@@ -74,8 +74,21 @@
 
         async function loadChannels() {
             try {
-                const res = await fetch('kanali.json');
-                allChannels = await res.json();
+                const [defaultRes, m3u8Res] = await Promise.all([
+                    fetch('defaultkanali.json'),
+                    fetch('kanali.json')
+                ]);
+                const defaultChannels = await defaultRes.json();
+                const m3u8Channels = await m3u8Res.json();
+
+                const m3u8Map = new Map(m3u8Channels.map(ch => [ch.channel_id, ch.watchurl]));
+
+                allChannels = defaultChannels.map(ch => ({
+                    channel_name: ch.channel_name,
+                    channel_id: ch.channel_id,
+                    watchurl: m3u8Map.get(ch.channel_id) || ''
+                })).filter(ch => ch.watchurl);
+
                 renderChannels('all');
             } catch (e) {
                 console.error('Failed to load channels', e);

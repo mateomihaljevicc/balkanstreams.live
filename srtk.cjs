@@ -2,78 +2,74 @@ const { chromium } = require('playwright');
 const fs = require('fs');
 const path = require('path');
 
+const DEFAULT_PATH = path.join(__dirname, 'defaultkanali.json');
 const KANALI_PATH = path.join(__dirname, 'kanali.json');
 
-async function scrapeToken(embedUrl) {
-  const browser = await chromium.launch({ headless: true });
-  const context = await browser.newContext({ bypassServiceWorker: true });
-  const page = await context.newPage();
-
-  const m3u8Urls = [];
-  page.on('response', r => {
-    const u = r.url();
-    if (u.includes('.m3u8')) m3u8Urls.push(u);
-  });
-
-  try {
-    await page.goto(embedUrl, { waitUntil: 'networkidle', timeout: 30000 });
-    await page.waitForTimeout(5000);
-  } catch (e) {
-    console.error(`  Error loading ${embedUrl}:`, e.message);
-  }
-
-  await browser.close();
-
-  if (m3u8Urls.length === 0) return null;
-
-  // Prioritize: index.m3u8 > master.m3u8 > playlist.m3u8 > others (avoid mono/tracks)
-  const priority = [
-    '/index.m3u8',
-    '/master.m3u8',
-    '/playlist.m3u8',
-  ];
-
+function pickBestM3u8(urls) {
+  if (urls.length === 0) return null;
+  const priority = ['/index.m3u8', '/master.m3u8', '/playlist.m3u8'];
   for (const p of priority) {
-    const found = m3u8Urls.find(u => u.includes(p));
+    const found = urls.find(u => u.includes(p));
     if (found) return found;
   }
+  const nonMono = urls.find(u => !u.includes('mono') && !u.includes('tracks-'));
+  return nonMono || urls[0];
+}
 
-  // Fallback: first non-mono/tracks URL
-  const nonMono = m3u8Urls.find(u => !u.includes('mono') && !u.includes('tracks-'));
-  return nonMono || m3u8Urls[0];
+function saveJson(filePath, data) {
+  fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
 }
 
 async function main() {
-  if (!fs.existsSync(KANALI_PATH)) {
-    console.error('kanali.json not found');
+  if (!fs.existsSync(DEFAULT_PATH)) {
+    console.error('defaultkanali.json not found');
     process.exit(1);
   }
 
-  const kanali = JSON.parse(fs.readFileSync(KANALI_PATH, 'utf8'));
-  const updated = [];
+  const defaultChannels = JSON.parse(fs.readFileSync(DEFAULT_PATH, 'utf8'));
+  let kanali = [];
 
-  for (const ch of kanali) {
-    const embedUrl = ch.watchurl;
-    if (!embedUrl || !embedUrl.includes('watch.php')) {
+  const browser = await chromium.launch({ headless: true });
+
+  for (const ch of defaultChannels) {
+    if (!ch.defaulturl || !ch.defaulturl.includes('watch.php')) {
       console.log(`Skipping ${ch.channel_name} (no embed URL)`);
-      updated.push(ch);
       continue;
     }
 
     console.log(`Scraping ${ch.channel_name}...`);
-    const m3u8 = await scrapeToken(embedUrl);
 
-    if (m3u8) {
-      updated.push({ ...ch, watchurl: m3u8 });
-      console.log(`  OK: ${m3u8}`);
-    } else {
-      updated.push(ch);
-      console.log(`  FAILED: no m3u8 found`);
-    }
+    const context = await browser.newContext({ bypassServiceWorker: true });
+    const page = await context.newPage();
+
+    let m3u8 = null;
+
+    page.on('response', r => {
+      if (m3u8) return;
+      const u = r.url();
+      if (u.includes('.m3u8')) {
+        m3u8 = pickBestM3u8([u]);
+      }
+    });
+
+    try {
+      await page.goto(ch.defaulturl, { waitUntil: 'domcontentloaded', timeout: 15000 });
+      if (!m3u8) {
+        try {
+          await page.waitForResponse(r => r.url().includes('.m3u8'), { timeout: 15000 });
+        } catch {}
+      }
+    } catch {}
+
+    await context.close();
+
+    kanali.push({ channel_id: ch.channel_id, watchurl: m3u8 || '' });
+    saveJson(KANALI_PATH, kanali);
+    console.log(m3u8 ? `  OK` : `  FAILED`);
   }
 
-  fs.writeFileSync(KANALI_PATH, JSON.stringify(updated, null, 2));
-  console.log('\nkanali.json updated');
+  await browser.close();
+  console.log('\nDone');
 }
 
 main().catch(e => {
