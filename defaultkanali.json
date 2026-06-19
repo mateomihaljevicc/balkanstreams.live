@@ -130,8 +130,23 @@
     "defaulturl": "https://dlhd.pk/watch.php?id=710"
   },
   {
-    "channel_name": "HRT 1",
-    "channel_id": "999",
-    "defaulturl": "https://live3.cdn-canlitv.com/hrt1.m3u8?anahtar=SKYRmRdriEt2vzTv3n-JyA&sure=1781836847&ip=150.228.69.70"
+    "channel_name": "HBO USA",
+    "channel_id": "321",
+    "defaulturl": "https://dlhd.pk/watch.php?id=321"
+  },
+  {
+    "channel_name": "HBO2 USA",
+    "channel_id": "689",
+    "defaulturl": "https://dlhd.pk/watch.php?id=689"
+  },
+  {
+    "channel_name": "HBO Comedy USA",
+    "channel_id": "690",
+    "defaulturl": "https://dlhd.pk/watch.php?id=690"
+  },
+  {
+    "channel_name": "HBO Latino USA",
+    "channel_id": "692",
+    "defaulturl": "https://dlhd.pk/watch.php?id=692"
   }
 ]
