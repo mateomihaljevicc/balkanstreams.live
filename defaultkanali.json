@@ -148,5 +148,31 @@
     "channel_name": "HBO Latino USA",
     "channel_id": "692",
     "defaulturl": "https://dlhd.pk/watch.php?id=692"
+  },
+  {
+    "channel_name": "18+",
+    "channel_id": "692",
+    "defaulturl": "https://dlhd.pk/watch.php?id=501"
+  },
+  {
+    "channel_name": "18+",
+    "channel_id": "692",
+    "defaulturl": "https://dlhd.pk/watch.php?id=502"
+  },
+  {
+    "channel_name": "18+",
+    "channel_id": "692",
+    "defaulturl": "https://dlhd.pk/watch.php?id=503"
+  },
+  {
+    "channel_name": "18+",
+    "channel_id": "692",
+    "defaulturl": "https://dlhd.pk/watch.php?id=504"
+  },
+  {
+    "channel_name": "18+",
+    "channel_id": "692",
+    "defaulturl": "https://dlhd.pk/watch.php?id=505"
   }
+
 ]
