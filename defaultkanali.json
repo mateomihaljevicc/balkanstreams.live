@@ -128,5 +128,10 @@
     "channel_name": "Sport Klub Golf Hrvatska",
     "channel_id": "710",
     "defaulturl": "https://dlhd.pk/watch.php?id=710"
+  },
+  {
+    "channel_name": "HRT 1",
+    "channel_id": "999",
+    "defaulturl": "https://live3.cdn-canlitv.com/hrt1.m3u8?anahtar=SKYRmRdriEt2vzTv3n-JyA&sure=1781836847&ip=150.228.69.70"
   }
 ]
